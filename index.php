@@ -1,24 +1,10 @@
 <?php
-// index.php
-session_start();
+declare(strict_types=1);
 
-// If the user is not logged in, send them to the login page
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+require_once __DIR__ . '/includes/auth.php';
+
+if (current_user_id() === null) {
+    redirect_to('login.php');
 }
 
-// If they are logged in, redirect based on their user_type
-switch ($_SESSION['user_type']) {
-    case 'admin':
-        header('Location: admin_dashboard.php');
-        break;
-
-    case 'standard':
-    default:
-        header('Location: dashboard.php');
-        break;
-}
-
-exit;
-?>
+redirect_for_user_type();

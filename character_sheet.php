@@ -151,34 +151,32 @@ foreach ($levelUpMoves as $cm) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= htmlspecialchars($name) ?> — Character Sheet</title>
-  <!-- Optional external stylesheet to match your exact style -->
-  <link rel="stylesheet" href="assets/character-sheet.css" media="all">
+  <link rel="stylesheet" href="assets/theme.css" media="all">
   <style>
-    /* Fallback minimal styling — replace with your exact uploaded design in assets/character-sheet.css */
-    :root { --brand:#e3350d; --ink:#1f2937; --muted:#6b7280; --bg:#ffffff; --border:#e5e7eb; }
+    :root { --brand:#d63b30; --ink:#1a2433; --muted:#506070; --bg:#fffdf4; --border:#232323; }
     @page { size: Letter; margin: 0.5in; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--ink); }
-    .sheet { max-width: 8.5in; margin: 0 auto; border:1px solid var(--border); border-radius: 12px; padding: 24px; }
+    body { font-family: 'VT323', monospace; background: linear-gradient(180deg, #9bd0ff 0%, #f7f1cf 100%); color: var(--ink); }
+    .sheet { max-width: 8.5in; margin: 0 auto; border:4px solid var(--border); border-radius: 22px; padding: 24px; }
     .header { display:flex; gap:24px; align-items: center; }
-    .art { width: 280px; height: 280px; object-fit: contain; background: #f9fafb; border:1px solid var(--border); border-radius: 12px; }
+    .art { width: 280px; height: 280px; object-fit: contain; background: radial-gradient(circle at top, #fff, #dcecff); border:4px solid var(--border); border-radius: 18px; }
     .meta { flex:1; }
-    .title { font-size: 32px; font-weight: 800; line-height:1.1; margin:0 0 4px; }
+    .title { font-family: 'Press Start 2P', cursive; font-size: 32px; font-weight: 800; line-height:1.3; margin:0 0 8px; }
     .subtitle { color: var(--muted); margin:0 0 8px; }
     .chips { display:flex; gap:8px; flex-wrap: wrap; }
-    .chip { background: #f3f4f6; border:1px solid var(--border); padding:4px 10px; border-radius: 999px; font-weight:600; }
+    .chip { background: #fff8d8; border:3px solid var(--border); padding:6px 12px; border-radius: 999px; font-weight:600; }
     .grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-top: 20px; }
-    .card { border:1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
-    .label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .card { border:4px solid var(--border); border-radius: 18px; padding: 12px 14px; background: rgba(255,255,255,0.85); }
+    .label { font-family: 'Press Start 2P', cursive; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
     .value { font-weight: 700; font-size: 18px; }
     .stats { display:grid; grid-template-columns: repeat(6, 1fr); gap:10px; margin-top: 20px; }
-    .stat { text-align:center; border:1px solid var(--border); border-radius: 10px; padding: 10px 8px; }
+    .stat { text-align:center; border:4px solid var(--border); border-radius: 16px; padding: 10px 8px; background: rgba(255,255,255,0.9); }
     .printbar { display:flex; justify-content: space-between; align-items:center; margin-bottom:12px; }
-    .btn { display:inline-block; border:1px solid var(--border); border-radius: 10px; padding:8px 12px; background:#f3f4f6; text-decoration:none; color:var(--ink); }
-    .btn.primary { background: var(--brand); color:#fff; border-color: var(--brand); }
-    .moves { margin-top: 18px; }
-    .moves table { width:100%; border-collapse: collapse; border:1px solid var(--border); }
+    .btn { display:inline-block; border:3px solid var(--border); border-radius: 12px; padding:10px 14px; background:#fff8d8; text-decoration:none; color:var(--ink); font-family:'Press Start 2P', cursive; font-size:12px; }
+    .btn.primary { background: var(--brand); color:#fff; border-color: var(--border); }
+    .moves { margin-top: 18px; background: rgba(255,255,255,0.9); }
+    .moves table { width:100%; border-collapse: collapse; border:0; }
     .moves th, .moves td { padding:8px 10px; border-bottom:1px solid var(--border); font-size: 14px; }
-    .moves th { text-transform:uppercase; font-size:12px; letter-spacing:.06em; color:var(--muted); background:#f9fafb; }
+    .moves th { text-transform:uppercase; font-size:12px; letter-spacing:.06em; color:var(--muted); background:#dcecff; font-family:'Press Start 2P', cursive; }
     .moves td:nth-child(1) { font-weight:600; }
     @media print { .btn, .printbar { display:none !important; } .sheet { border:none; } }
   </style>

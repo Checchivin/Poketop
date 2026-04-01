@@ -1,18 +1,11 @@
 <?php
-session_start();
-require_once 'config.php';
+declare(strict_types=1);
 
-// Redirect non-logged-in users to login
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
+require_once __DIR__ . '/includes/auth.php';
 
-// Connect to database
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-if ($mysqli->connect_errno) {
-    die('DB connection failed: ' . $mysqli->connect_error);
-}
+require_login();
+
+$mysqli = app_db();
 
 $message = '';
 
@@ -52,10 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['join_code'])) {
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Join Campaign — PokéTop</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css">
 </head>
-<body class="bg-light">
-  <div class="container py-5">
-    <h1 class="mb-4">Join a Campaign</h1>
+<body>
+  <div class="container py-5 game-layout">
+    <div class="page-hero mb-4">
+      <h1 class="page-title mb-2">Join A Campaign</h1>
+      <p class="page-subtitle">Enter a trainer code to link this save file to an active adventure.</p>
+    </div>
     <?php if ($message): ?>
       <div class="alert alert-info"><?= $message ?></div>
     <?php endif; ?>

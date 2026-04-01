@@ -1,59 +1,13 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+declare(strict_types=1);
 
-session_start();
-require_once 'config.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/pokeapi.php';
 
-// Redirect non-logged-in users to login
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
+require_login();
 
-$user_id = $_SESSION['user_id'];
-
-// Connect to database
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-if ($mysqli->connect_errno) {
-    die('DB connection failed: ' . $mysqli->connect_error);
-}
-
-function fetch_json(string $url) {
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_FAILONERROR, true);
-    $resp = curl_exec($ch);
-    $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    if ($resp === false || $http >= 400) return false;
-    return json_decode($resp, true);
-}
-
-// Get shiny official-artwork for a species name, with simple in-request cache
-function get_shiny_art(string $speciesName): ?string {
-    static $cache = [];
-
-    $key = strtolower(trim($speciesName));
-    if (isset($cache[$key])) return $cache[$key];
-
-    // Normalize to PokéAPI slug (mr mime -> mr-mime; remove dots/apostrophes)
-    $slug = preg_replace('/\s+/', '-', $key);
-    $slug = str_replace(['.', "'"], ['', ''], $slug);
-
-    $data = fetch_json("https://pokeapi.co/api/v2/pokemon/{$slug}");
-    if (!$data) return $cache[$key] = null;
-
-    $url =
-        $data['sprites']['other']['official-artwork']['front_shiny']
-        ?? $data['sprites']['other']['home']['front_shiny']
-        ?? $data['sprites']['front_shiny']
-        ?? null;
-
-    return $cache[$key] = $url;
-}
+$user_id = current_user_id();
+$mysqli = app_db();
 
 // Fetch all seen Pokémon (distinct) for this user
 $seenStmt = $mysqli->prepare(
@@ -97,6 +51,7 @@ $caughtStmt->close();
 
 // Pokéball icon URL
 $pokeballIcon = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+$caughtCount = count($caughtNames);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -105,6 +60,7 @@ $pokeballIcon = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprite
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Pokédex — PokéTop</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css">
   <style>
     .pokedex-card { position: relative; }
     .caught-badge {
@@ -116,9 +72,26 @@ $pokeballIcon = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprite
     }
   </style>
 </head>
-<body class="bg-light">
-  <div class="container py-5">
-    <h1 class="mb-4">Your Pokédex</h1>
+<body>
+  <div class="container py-5 game-layout">
+    <div class="page-hero mb-4">
+      <h1 class="page-title mb-2">Trainer Pokédex</h1>
+      <p class="page-subtitle">Review every species your trainer has seen and every encounter already secured.</p>
+    </div>
+    <div class="status-strip">
+      <div class="status-tile">
+        <div class="status-tile-label">Seen</div>
+        <div class="status-tile-value"><?= count($seenNormal) + count($seenShiny) ?></div>
+      </div>
+      <div class="status-tile">
+        <div class="status-tile-label">Caught</div>
+        <div class="status-tile-value"><?= $caughtCount ?></div>
+      </div>
+      <div class="status-tile">
+        <div class="status-tile-label">Shiny Seen</div>
+        <div class="status-tile-value"><?= count($seenShiny) ?></div>
+      </div>
+    </div>
     <ul class="nav nav-tabs" id="pokedexTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="normal-tab" data-bs-toggle="tab" data-bs-target="#normal" type="button" role="tab" aria-controls="normal" aria-selected="true">
@@ -136,19 +109,18 @@ $pokeballIcon = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprite
         <?php if (empty($seenNormal)): ?>
           <div class="alert alert-info">You haven't seen any normal Pokémon yet.</div>
         <?php else: ?>
-          <div class="row g-3">
+          <div class="dex-grid">
             <?php foreach ($seenNormal as $p): ?>
-              <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                <div class="card text-center pokedex-card">
+                <div class="card text-center pokedex-card animate-panel">
                   <?php if (in_array($p['pokemon_name'], $caughtNames)): ?>
                     <img src="<?= $pokeballIcon ?>" class="caught-badge" alt="Caught">
                   <?php endif; ?>
                   <img src="<?= htmlspecialchars($p['sprite_url']) ?>" class="card-img-top" alt="<?= htmlspecialchars($p['pokemon_name']) ?>">
                   <div class="card-body p-2">
+                    <div class="dex-counter mb-2"><?= strtoupper(substr($p['pokemon_name'], 0, 3)) ?></div>
                     <small class="card-title"><?= htmlspecialchars(ucfirst($p['pokemon_name'])) ?></small>
                   </div>
                 </div>
-              </div>
             <?php endforeach; ?>
           </div>
         <?php endif; ?>
@@ -157,10 +129,9 @@ $pokeballIcon = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprite
         <?php if (empty($seenShiny)): ?>
           <div class="alert alert-info">You haven't seen any shiny Pokémon yet.</div>
         <?php else: ?>
-          <div class="row g-3">
+          <div class="dex-grid">
             <?php foreach ($seenShiny as $p): ?>
-              <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                <div class="card text-center pokedex-card border-warning">
+                <div class="card text-center pokedex-card border-warning animate-panel">
                   <?php if (in_array($p['pokemon_name'], $caughtNames)): ?>
                     <img src="<?= $pokeballIcon ?>" class="caught-badge" alt="Caught">
                   <?php endif; ?>
@@ -169,10 +140,10 @@ $pokeballIcon = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprite
                   ?>
                   <img src="<?= htmlspecialchars($shinyImg) ?>" class="card-img-top" alt="<?= htmlspecialchars($p['pokemon_name']) ?>">
                   <div class="card-body p-2">
+                    <div class="dex-counter mb-2">SHINY</div>
                     <small class="card-title text-warning"><?= htmlspecialchars(ucfirst($p['pokemon_name'])) ?> ★</small>
                   </div>
                 </div>
-              </div>
             <?php endforeach; ?>
           </div>
         <?php endif; ?>
